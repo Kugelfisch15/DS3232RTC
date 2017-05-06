@@ -33,7 +33,7 @@
  * CC BY-SA 4.0                                                         *
  * "Arduino DS3232RTC Library" by Jack Christensen is licensed under    *
  * CC BY-SA 4.0, http://creativecommons.org/licenses/by-sa/4.0/         *
- *----------------------------------------------------------------------*/ 
+ *----------------------------------------------------------------------*/
 
 #include <DS3232RTC.h>
 
@@ -71,9 +71,9 @@ byte DS3232RTC::errCode;     //for debug
  *----------------------------------------------------------------------*/
 DS3232RTC::DS3232RTC()
 {
-    i2cBegin();
+    // i2cBegin();
 }
-  
+
 /*----------------------------------------------------------------------*
  * Reads the current time from the RTC and returns it as a time_t       *
  * value. Returns a zero value if an I2C error occurred (e.g. RTC       *
@@ -82,7 +82,7 @@ DS3232RTC::DS3232RTC()
 time_t DS3232RTC::get()
 {
     tmElements_t tm;
-    
+
     if ( read(tm) ) return 0;
     return( makeTime(tm) );
 }
@@ -111,7 +111,7 @@ byte DS3232RTC::read(tmElements_t &tm)
     if ( byte e = i2cEndTransmission() ) { errCode = e; return e; }
     //request 7 bytes (secs, min, hr, dow, date, mth, yr)
     i2cRequestFrom(RTC_ADDR, tmNbrFields);
-    tm.Second = bcd2dec(i2cRead() & ~_BV(DS1307_CH));   
+    tm.Second = bcd2dec(i2cRead() & ~_BV(DS1307_CH));
     tm.Minute = bcd2dec(i2cRead());
     tm.Hour = bcd2dec(i2cRead() & ~_BV(HR1224));    //assumes 24hr clock
     tm.Wday = i2cRead();
@@ -136,7 +136,7 @@ byte DS3232RTC::write(tmElements_t &tm)
     i2cWrite(tm.Wday);
     i2cWrite(dec2bcd(tm.Day));
     i2cWrite(dec2bcd(tm.Month));
-    i2cWrite(dec2bcd(tmYearToY2k(tm.Year))); 
+    i2cWrite(dec2bcd(tmYearToY2k(tm.Year)));
     byte ret = i2cEndTransmission();
     uint8_t s = readRTC(RTC_STATUS);        //read the status register
     writeRTC( RTC_STATUS, s & ~_BV(OSF) );  //clear the Oscillator Stop Flag
@@ -192,7 +192,7 @@ byte DS3232RTC::readRTC(byte addr, byte *values, byte nBytes)
 byte DS3232RTC::readRTC(byte addr)
 {
     byte b;
-    
+
     readRTC(addr, &b, 1);
     return b;
 }
@@ -208,7 +208,7 @@ byte DS3232RTC::readRTC(byte addr)
 void DS3232RTC::setAlarm(ALARM_TYPES_t alarmType, byte seconds, byte minutes, byte hours, byte daydate)
 {
     uint8_t addr;
-    
+
     seconds = dec2bcd(seconds);
     minutes = dec2bcd(minutes);
     hours = dec2bcd(hours);
@@ -218,7 +218,7 @@ void DS3232RTC::setAlarm(ALARM_TYPES_t alarmType, byte seconds, byte minutes, by
     if (alarmType & 0x04) hours |= _BV(A1M3);
     if (alarmType & 0x10) daydate |= _BV(DYDT);
     if (alarmType & 0x08) daydate |= _BV(A1M4);
-    
+
     if ( !(alarmType & 0x80) ) {    //alarm 1
         addr = ALM1_SECONDS;
         writeRTC(addr++, seconds);
@@ -251,14 +251,14 @@ void DS3232RTC::setAlarm(ALARM_TYPES_t alarmType, byte minutes, byte hours, byte
 void DS3232RTC::alarmInterrupt(byte alarmNumber, bool interruptEnabled)
 {
     uint8_t controlReg, mask;
-    
+
     controlReg = readRTC(RTC_CONTROL);
     mask = _BV(A1IE) << (alarmNumber - 1);
     if (interruptEnabled)
         controlReg |= mask;
     else
         controlReg &= ~mask;
-    writeRTC(RTC_CONTROL, controlReg); 
+    writeRTC(RTC_CONTROL, controlReg);
 }
 
 /*----------------------------------------------------------------------*
@@ -268,7 +268,7 @@ void DS3232RTC::alarmInterrupt(byte alarmNumber, bool interruptEnabled)
 bool DS3232RTC::alarm(byte alarmNumber)
 {
     uint8_t statusReg, mask;
-    
+
     statusReg = readRTC(RTC_STATUS);
     mask = _BV(A1F) << (alarmNumber - 1);
     if (statusReg & mask) {
@@ -324,7 +324,7 @@ int DS3232RTC::temperature(void)
         int i;
         byte b[2];
     } rtcTemp;
-    
+
     rtcTemp.b[0] = readRTC(TEMP_LSB);
     rtcTemp.b[1] = readRTC(TEMP_MSB);
     return rtcTemp.i / 64;
